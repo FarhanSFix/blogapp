@@ -56,13 +56,15 @@ class _LoginState extends State<Login> {
               style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 40),
+            Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
             TextFormField(
               keyboardType: TextInputType.emailAddress,
               controller: txtEmail,
               validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
               decoration: kInputDecoration('Email'),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
+            Text('Password', style: TextStyle(fontWeight: FontWeight.bold)),
             TextFormField(
               controller: txtPassword,
               obscureText: true,
@@ -81,7 +83,7 @@ class _LoginState extends State<Login> {
                       });
                     }
                   }),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
             kLoginRegisterHint('Dont have an acount? ', 'Register', () {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => Register()),
