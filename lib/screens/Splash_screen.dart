@@ -57,7 +57,7 @@ class _SplashState extends State<Splash> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Text(
-                'By Farhan S.F',
+                'By Brother\'s Team',
                 style: TextStyle(fontSize: 16, fontFamily: 'Caudex'),
               ),
             ),

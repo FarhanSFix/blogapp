@@ -1,5 +1,6 @@
 import 'package:blogapp/models/api_response.dart';
 import 'package:blogapp/models/user.dart';
+import 'package:blogapp/screens/reset_password_screen.dart';
 import 'package:blogapp/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,9 +57,27 @@ class _LoginState extends State<Login> {
         child: ListView(
           padding: EdgeInsets.all(32),
           children: [
-            Text(
-              "Login",
-              style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+            RichText(
+              text: TextSpan(
+                text: 'Log',
+                style: const TextStyle(
+                  fontFamily: 'Caudex',
+                  fontSize: 50,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueAccent,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'In',
+                    style: const TextStyle(
+                      fontFamily: 'Caudex',
+                      fontSize: 50,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: 40),
             Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -76,6 +95,19 @@ class _LoginState extends State<Login> {
               validator: (val) =>
                   val!.length < 6 ? 'Required at least 6 chars' : null,
               decoration: kInputDecoration('Password'),
+            ),
+            SizedBox(height: 10),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ResetPassword()),
+                  );
+                },
+                child: Text("Forgot Password?"),
+              ),
             ),
             SizedBox(height: 10),
             loading

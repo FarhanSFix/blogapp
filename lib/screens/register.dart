@@ -57,17 +57,37 @@ class _RegisterState extends State<Register> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
           children: [
-            Text(
-              "Register",
-              style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+            RichText(
+              text: TextSpan(
+                text: 'Reg',
+                style: const TextStyle(
+                  fontFamily: 'Caudex',
+                  fontSize: 50,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueAccent,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'ister',
+                    style: const TextStyle(
+                      fontFamily: 'Caudex',
+                      fontSize: 50,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 30),
+            Text('Nama', style: TextStyle(fontWeight: FontWeight.bold)),
             TextFormField(
               controller: nameController,
               validator: (val) => val!.isEmpty ? 'Invalid name' : null,
               decoration: kInputDecoration('Name'),
             ),
             SizedBox(height: 20),
+            Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
             TextFormField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
@@ -75,6 +95,7 @@ class _RegisterState extends State<Register> {
               decoration: kInputDecoration('Email'),
             ),
             SizedBox(height: 20),
+            Text('Password', style: TextStyle(fontWeight: FontWeight.bold)),
             TextFormField(
               controller: passwordController,
               obscureText: true,
@@ -83,6 +104,10 @@ class _RegisterState extends State<Register> {
               decoration: kInputDecoration('Password'),
             ),
             SizedBox(height: 20),
+            Text(
+              'Confirm Password',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             TextFormField(
               controller: passwordConfirmController,
               obscureText: true,

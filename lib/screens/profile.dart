@@ -217,8 +217,111 @@ class _ProfileState extends State<Profile> {
                     children: [Icon(Icons.logout), Text("Logout")],
                   ),
                 ),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.45),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: GestureDetector(
+                    onTap: () => showCustomBottomSheet(context),
+                    child: Container(
+                      height: 40,
+                      width: 150,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.grey[500],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('About Us'),
+                            SizedBox(width: 5),
+                            Icon(Icons.info_outline),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           );
+  }
+
+  void showCustomBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const CustomBottomSheet(),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+    );
+  }
+}
+
+class CustomBottomSheet extends StatelessWidget {
+  const CustomBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(height: 5, width: 70, color: Colors.grey),
+          RichText(
+            text: TextSpan(
+              text: 'Our',
+              style: const TextStyle(
+                fontFamily: 'Caudex',
+                fontSize: 30,
+                fontWeight: FontWeight.w600,
+                color: Colors.blueAccent,
+              ),
+              children: [
+                TextSpan(
+                  text: 'Blog',
+                  style: const TextStyle(
+                    fontFamily: 'Caudex',
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('============================================='),
+          Text(
+            'Created by Brother\'s Team.',
+            textAlign: TextAlign.left,
+            style: TextStyle(color: Colors.black),
+          ),
+          Text(
+            '1. Najib Nurdiansyah(22SA11A058) \n2. Farhan Sulis Febriyan (22SA11A107) \n3. Fini Ikhfiani Fadilah (22SA11A111)',
+            textAlign: TextAlign.left,
+            style: TextStyle(color: Colors.black),
+          ),
+          const Text(
+            '-------------------------------------------------------------------------------------',
+          ),
+          const SizedBox(height: 8),
+          const Text('Our Blog'),
+          const Text('\u00A9 2025'),
+          const Text('Version 1.0.0'),
+          const Text('============================================='),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
   }
 }

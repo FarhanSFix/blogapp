@@ -161,9 +161,21 @@ class _PostScreenState extends State<PostScreen> {
                   itemBuilder: (BuildContext context, int index) {
                     Post post = _postList[index];
                     return Container(
+                      margin: EdgeInsets.only(bottom: 8, top: 8),
                       padding: EdgeInsets.symmetric(
                         horizontal: 4,
                         vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 1,
+                            offset: Offset(2, 2),
+                            color: Colors.black.withOpacity(0.5),
+                          ),
+                        ],
+                        borderRadius: BorderRadius.circular(15),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
