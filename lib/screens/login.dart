@@ -15,9 +15,9 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final GlobalKey<FormState> formkey = GlobalKey<FormState>();
-  TextEditingController txtEmail = TextEditingController();
-  TextEditingController txtPassword = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController txtEmail = TextEditingController();
+  final TextEditingController txtPassword = TextEditingController();
   bool loading = false;
 
   void _loginUser() async {
@@ -25,12 +25,10 @@ class _LoginState extends State<Login> {
     if (response.error == null) {
       _saveAndRedirectToHome(response.data as User);
     } else {
-      setState(() {
-        loading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${response.error}')));
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${response.error}')),
+      );
     }
   }
 
@@ -52,83 +50,157 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Form(
-        key: formkey,
-        child: ListView(
-          padding: EdgeInsets.all(32),
-          children: [
-            RichText(
-              text: TextSpan(
-                text: 'Log',
-                style: const TextStyle(
-                  fontFamily: 'Caudex',
-                  fontSize: 50,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blueAccent,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'In',
-                    style: const TextStyle(
-                      fontFamily: 'Caudex',
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 40),
-            Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              keyboardType: TextInputType.emailAddress,
-              controller: txtEmail,
-              validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
-              decoration: kInputDecoration('Email'),
-            ),
-            SizedBox(height: 20),
-            Text('Password', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              controller: txtPassword,
-              obscureText: true,
-              validator: (val) =>
-                  val!.length < 6 ? 'Required at least 6 chars' : null,
-              decoration: kInputDecoration('Password'),
-            ),
-            SizedBox(height: 10),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ResetPassword()),
-                  );
-                },
-                child: Text("Forgot Password?"),
-              ),
-            ),
-            SizedBox(height: 10),
-            loading
-                ? Center(child: CircularProgressIndicator())
-                : kTextButton('Login', () {
-                    if (formkey.currentState!.validate()) {
-                      setState(() {
-                        loading = true;
-                        _loginUser();
-                      });
-                    }
-                  }),
-            SizedBox(height: 20),
-            kLoginRegisterHint('Dont have an acount? ', 'Register', () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => Register()),
-                (route) => false,
-              );
-            }),
-          ],
+      // Background gradient container
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.blueAccent, // sama warna font 'Log'
+              Colors.green,      // sama warna font 'In'
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Card(
+              color: Colors.white,
+              elevation: 10,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RichText(
+                        text: const TextSpan(
+                          text: 'Log',
+                          style: TextStyle(
+                            fontFamily: 'Caudex',
+                            fontSize: 50,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blueAccent,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'In',
+                              style: TextStyle(
+                                fontFamily: 'Caudex',
+                                fontSize: 50,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      _buildLabel('Email'),
+                      _buildInputField(
+                        txtEmail,
+                        'Email',
+                        inputType: TextInputType.emailAddress,
+                        validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
+                      ),
+                      _buildLabel('Password'),
+                      _buildInputField(
+                        txtPassword,
+                        'Password',
+                        obscureText: true,
+                        validator: (val) =>
+                            val!.length < 6 ? 'Required at least 6 chars' : null,
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => ResetPassword()),
+                            );
+                          },
+                          child: const Text("Forgot Password?"),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      loading
+                          ? const CircularProgressIndicator()
+                          : SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  backgroundColor: Colors.blue[800],
+                                ),
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    setState(() {
+                                      loading = true;
+                                    });
+                                    _loginUser();
+                                  }
+                                },
+                                child: const Text(
+                                  'Login',
+                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                      const SizedBox(height: 20),
+                      kLoginRegisterHint('Don\'t have an account? ', 'Register', () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => Register()),
+                          (route) => false,
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+    TextEditingController controller,
+    String hintText, {
+    TextInputType inputType = TextInputType.text,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: inputType,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hintText,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.grey[100],
       ),
     );
   }

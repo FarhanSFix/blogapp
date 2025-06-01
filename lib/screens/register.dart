@@ -13,12 +13,13 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool loading = false;
-  TextEditingController nameController = TextEditingController(),
-      emailController = TextEditingController(),
-      passwordController = TextEditingController(),
-      passwordConfirmController = TextEditingController();
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController passwordConfirmController = TextEditingController();
 
   void _registerUser() async {
     ApiResponse response = await register(
@@ -29,22 +30,19 @@ class _RegisterState extends State<Register> {
     if (response.error == null) {
       _saveAndRedirectToHome(response.data as User);
     } else {
-      setState(() {
-        loading = !loading;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${response.error}')));
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${response.error}')),
+      );
     }
   }
 
-  // Save and redirect to home
   void _saveAndRedirectToHome(User user) async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     await pref.setString('token', user.token ?? '');
     await pref.setInt('userId', user.id ?? 0);
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => Login()),
+      MaterialPageRoute(builder: (_) => Login()),
       (route) => false,
     );
   }
@@ -52,90 +50,151 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Form(
-        key: formKey,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
-          children: [
-            RichText(
-              text: TextSpan(
-                text: 'Reg',
-                style: const TextStyle(
-                  fontFamily: 'Caudex',
-                  fontSize: 50,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blueAccent,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'ister',
-                    style: const TextStyle(
-                      fontFamily: 'Caudex',
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.green,
-                    ),
+      // Buang backgroundColor dari scaffold, ganti dengan Container di body
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.blueAccent,  // warna biru font "Reg"
+              Colors.green,       // warna hijau font "ister"
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Card(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 10,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RichText(
+                        text: const TextSpan(
+                          text: 'Reg',
+                          style: TextStyle(
+                            fontFamily: 'Caudex',
+                            fontSize: 50,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blueAccent,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'ister',
+                              style: TextStyle(
+                                fontFamily: 'Caudex',
+                                fontSize: 50,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      _buildLabel('Name'),
+                      _buildInputField(
+                        nameController,
+                        'Name',
+                        validator: (val) => val!.isEmpty ? 'Invalid name' : null,
+                      ),
+                      _buildLabel('Email'),
+                      _buildInputField(
+                        emailController,
+                        'Email',
+                        inputType: TextInputType.emailAddress,
+                        validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
+                      ),
+                      _buildLabel('Password'),
+                      _buildInputField(
+                        passwordController,
+                        'Password',
+                        obscureText: true,
+                        validator: (val) => val!.length < 6 ? 'Minimum 6 characters' : null,
+                      ),
+                      _buildLabel('Confirm Password'),
+                      _buildInputField(
+                        passwordConfirmController,
+                        'Confirm Password',
+                        obscureText: true,
+                        validator: (val) => val != passwordController.text ? 'Passwords do not match' : null,
+                      ),
+                      const SizedBox(height: 25),
+                      loading
+                          ? const CircularProgressIndicator()
+                          : SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  backgroundColor: Colors.blue[800],
+                                ),
+                                onPressed: () {
+                                  if (formKey.currentState!.validate()) {
+                                    setState(() => loading = true);
+                                    _registerUser();
+                                  }
+                                },
+                                child: const Text('Register', style: TextStyle(fontSize: 16, color: Colors.white)),
+                              ),
+                            ),
+                      const SizedBox(height: 20),
+                      kLoginRegisterHint('Already have an account? ', 'Login', () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => Login()),
+                          (route) => false,
+                        );
+                      }),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(height: 30),
-            Text('Nama', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              controller: nameController,
-              validator: (val) => val!.isEmpty ? 'Invalid name' : null,
-              decoration: kInputDecoration('Name'),
-            ),
-            SizedBox(height: 20),
-            Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
-              decoration: kInputDecoration('Email'),
-            ),
-            SizedBox(height: 20),
-            Text('Password', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              controller: passwordController,
-              obscureText: true,
-              validator: (val) =>
-                  val!.length < 6 ? 'Required at least 6 chars' : null,
-              decoration: kInputDecoration('Password'),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Confirm Password',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextFormField(
-              controller: passwordConfirmController,
-              obscureText: true,
-              validator: (val) => val != passwordController.text
-                  ? 'Confirm password does not match'
-                  : null,
-              decoration: kInputDecoration('Confirm password'),
-            ),
-            SizedBox(height: 20),
-            loading
-                ? Center(child: CircularProgressIndicator())
-                : kTextButton('Register', () {
-                    if (formKey.currentState!.validate()) {
-                      setState(() {
-                        loading = !loading;
-                        _registerUser();
-                      });
-                    }
-                  }),
-            SizedBox(height: 20),
-            kLoginRegisterHint('Already have an account? ', 'Login', () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => Login()),
-                (route) => false,
-              );
-            }),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+    TextEditingController controller,
+    String hintText, {
+    TextInputType inputType = TextInputType.text,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: inputType,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hintText,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.grey[100],
       ),
     );
   }
