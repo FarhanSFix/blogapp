@@ -16,52 +16,56 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Blog App'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.exit_to_app),
-            onPressed: (){
-              logout().then((value) => {
-                Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context)=>Login()), (route) => false)
-              });
-            },
-          )
-        ],
-      ),
-      body: currentIndex == 0 ? PostScreen() : Profile(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){
-           Navigator.of(context).push(MaterialPageRoute(builder: (context)=>PostForm(
-             title: 'Add new post',
-           )));
-        },
-        child: Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        notchMargin: 5,
-        elevation: 10,
-        clipBehavior: Clip.antiAlias,
-        shape: CircularNotchedRectangle(),
-        child: BottomNavigationBar(
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: ''
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: ''
-            )
-          ],
-          currentIndex: currentIndex,
-          onTap: (val) {
-            setState(() {
-              currentIndex = val;
-            });
+    return SafeArea(
+      child: Scaffold(
+        body: currentIndex == 0 ? PostScreen() : Profile(),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          shape: CircleBorder(),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => PostForm(title: 'Add new post'),
+              ),
+            );
           },
+          child: Icon(Icons.add),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+          color: Colors.blue.shade100,
+          elevation: 3,
+          shape: CircularNotchedRectangle(),
+          notchMargin: 6.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.home,
+                  color: currentIndex == 0 ? Colors.blue : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    currentIndex = 0;
+                  });
+                },
+              ),
+              SizedBox(width: 48),
+              IconButton(
+                icon: Icon(
+                  Icons.person,
+                  color: currentIndex == 1 ? Colors.blue : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    currentIndex = 1;
+                  });
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
