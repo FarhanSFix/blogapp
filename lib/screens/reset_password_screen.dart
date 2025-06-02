@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:blogapp/constant.dart';
 import 'package:blogapp/screens/login.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +57,6 @@ class _ResetPasswordState extends State<ResetPassword> {
             ),
           ],
         ),
-
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -82,19 +80,17 @@ class _ResetPasswordState extends State<ResetPassword> {
           ),
           TextButton(
             onPressed: () async {
-              if (newPasswordController.text !=
-                  confirmPasswordController.text) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Password tidak cocok')));
+              if (newPasswordController.text != confirmPasswordController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Password tidak cocok')),
+                );
                 return;
               }
 
-              if (newPasswordController.text.isEmpty ||
-                  confirmPasswordController.text.isEmpty) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Kolom Harus diisi')));
+              if (newPasswordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Kolom Harus diisi')),
+                );
                 return;
               }
 
@@ -109,21 +105,19 @@ class _ResetPasswordState extends State<ResetPassword> {
               );
 
               final data = jsonDecode(res.body);
-              Navigator.of(context).pop(); // tutup dialog
+              Navigator.of(context).pop();
 
               if (res.statusCode == 200) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(data['message'])));
-                Navigator.push(
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(data['message'])),
+                );
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => Login()),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(data['message'] ?? somethingWentWrong),
-                  ),
+                  SnackBar(content: Text(data['message'] ?? somethingWentWrong)),
                 );
               }
             },
@@ -150,42 +144,71 @@ class _ResetPasswordState extends State<ResetPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: ListView(
-          children: [
-            RichText(
-              text: TextSpan(
-                text: 'Reset ',
-                style: const TextStyle(
-                  fontFamily: 'Caudex',
-                  fontSize: 40,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blueAccent,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'Password',
-                    style: const TextStyle(
-                      fontFamily: 'Caudex',
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.green,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF4A90E2), // biru
+              Color(0xFF50C878), // hijau
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Card(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 10,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RichText(
+                      text: const TextSpan(
+                        text: 'Reset ',
+                        style: TextStyle(
+                          fontFamily: 'Caudex',
+                          fontSize: 40,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blueAccent,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Password',
+                            style: TextStyle(
+                              fontFamily: 'Caudex',
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 30),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      keyboardType: TextInputType.emailAddress,
+                      controller: txtEmail,
+                      decoration: kInputDecoration('Email'),
+                    ),
+                    const SizedBox(height: 30),
+                    kTextButton('Reset', verifyEmail),
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: 20),
-            Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
-            TextFormField(
-              keyboardType: TextInputType.emailAddress,
-              controller: txtEmail,
-              decoration: kInputDecoration('Email'),
-            ),
-            SizedBox(height: 20),
-            kTextButton('Reset', verifyEmail),
-          ],
+          ),
         ),
       ),
     );
