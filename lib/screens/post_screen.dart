@@ -1,6 +1,7 @@
 import 'package:blogapp/constant.dart';
 import 'package:blogapp/models/api_response.dart';
 import 'package:blogapp/models/post.dart';
+import 'package:blogapp/models/user.dart';
 import 'package:blogapp/screens/comment_screen.dart';
 import 'package:blogapp/services/post_service.dart';
 import 'package:blogapp/services/user_service.dart';
@@ -18,8 +19,10 @@ class _PostScreenState extends State<PostScreen> {
   List<dynamic> _postList = [];
   int userId = 0;
   bool _loading = true;
+  String userName = '';
+  TextEditingController _searchController = TextEditingController();
+  List<dynamic> _filteredPostList = [];
 
-  // get all posts
   Future<void> retrievePosts() async {
     userId = await getUserId();
     ApiResponse response = await getPosts();
@@ -27,7 +30,8 @@ class _PostScreenState extends State<PostScreen> {
     if (response.error == null) {
       setState(() {
         _postList = response.data as List<dynamic>;
-        _loading = _loading ? !_loading : _loading;
+        _filteredPostList = _postList;
+        _loading = false;
       });
     } else if (response.error == unauthorized) {
       logout().then(
@@ -87,10 +91,29 @@ class _PostScreenState extends State<PostScreen> {
     }
   }
 
+  void loadUser() async {
+    ApiResponse response = await getUserDetail();
+    if (response.error == null) {
+      setState(() {
+        userName = (response.data as User).name ?? '';
+      });
+    } else if (response.error == unauthorized) {
+      logout().then(
+        (value) => {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => Login()),
+            (route) => false,
+          ),
+        },
+      );
+    }
+  }
+
   @override
   void initState() {
     retrievePosts();
     super.initState();
+    loadUser();
   }
 
   @override
@@ -106,7 +129,7 @@ class _PostScreenState extends State<PostScreen> {
                   elevation: 3,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: 16,
                       vertical: 4,
                     ),
                     child: Column(
@@ -117,7 +140,7 @@ class _PostScreenState extends State<PostScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Welcome, User...!",
+                              "Welcome, $userName!!",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -134,6 +157,8 @@ class _PostScreenState extends State<PostScreen> {
                         ),
                         Expanded(
                           child: TextField(
+                            controller: _searchController,
+                            onChanged: _filterPosts,
                             decoration: InputDecoration(
                               prefixIcon: Icon(Icons.search),
                               hintText: 'Search...',
@@ -157,9 +182,10 @@ class _PostScreenState extends State<PostScreen> {
                   return retrievePosts();
                 },
                 child: ListView.builder(
-                  itemCount: _postList.length,
+                  itemCount: _filteredPostList.length,
                   itemBuilder: (BuildContext context, int index) {
-                    Post post = _postList[index];
+                    Post post = _filteredPostList[index];
+
                     return Container(
                       margin: EdgeInsets.only(bottom: 8, top: 8),
                       padding: EdgeInsets.symmetric(
@@ -312,5 +338,18 @@ class _PostScreenState extends State<PostScreen> {
               ),
             ),
           );
+  }
+
+  void _filterPosts(String query) {
+    final filtered = _postList.where((post) {
+      final postBody = post.body?.toLowerCase() ?? '';
+      final userName = post.user?.name?.toLowerCase() ?? '';
+      final q = query.toLowerCase();
+      return postBody.contains(q) || userName.contains(q);
+    }).toList();
+
+    setState(() {
+      _filteredPostList = filtered;
+    });
   }
 }
