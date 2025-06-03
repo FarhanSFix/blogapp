@@ -10,6 +10,7 @@ const postsURL = baseURL + '/posts';
 const commentsURL = baseURL + '/comments';
 const resetPasswordURL = baseURL + '/reset-password';
 const confirmResetPasswordURL = baseURL + '/confirm-reset-password';
+const usersURL = baseURL + '/users';
 
 // ----- Errors -----
 const serverError = 'Server error';

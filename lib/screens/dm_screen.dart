@@ -1,7 +1,13 @@
+import 'dart:convert';
+
+import 'package:blogapp/constant.dart';
 import 'package:blogapp/screens/chat_screen.dart';
+import 'package:blogapp/services/user_service.dart';
 
 import 'package:flutter/material.dart';
 import 'dart:math';
+
+import 'package:http/http.dart' as http;
 
 class DmScreen extends StatefulWidget {
   const DmScreen({super.key});
@@ -16,15 +22,7 @@ class _DmScreenState extends State<DmScreen> {
     {'name': 'Nina', 'lastMessage': 'Lagi apa?', 'time': '11:30'},
     {'name': 'Dika', 'lastMessage': 'Thanks ya!', 'time': '10:45'},
   ];
-
-  final List<String> _activeUsers = [
-    'Rian',
-    'Nina',
-    'Dika',
-    'Sita',
-    'Raka',
-    'Putri',
-  ];
+  List<String> _activeUsers = [];
 
   Color getRandomColor() {
     final Random random = Random();
@@ -34,6 +32,36 @@ class _DmScreenState extends State<DmScreen> {
       random.nextInt(156) + 100,
       random.nextInt(156) + 100,
     );
+  }
+
+  Future<void> getUsers() async {
+    final token = await getToken();
+    if (token == 'null') return;
+
+    final res = await http.get(
+      Uri.parse(usersURL),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
+      setState(() {
+        _activeUsers = data
+            .map<String>((user) => user['name'] as String)
+            .toList();
+      });
+    } else {
+      print('Gagal ambil user aktif: ${res.statusCode}');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getUsers();
   }
 
   @override
@@ -51,10 +79,7 @@ class _DmScreenState extends State<DmScreen> {
               padding: const EdgeInsets.only(left: 20),
               child: Text(
                 "Active Now",
-                style: TextStyle(
-                  fontFamily: 'Caudex',
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             Container(
@@ -73,11 +98,10 @@ class _DmScreenState extends State<DmScreen> {
                           radius: 25,
                           backgroundColor: getRandomColor(),
                           child: Text(
-                            user[0],
-                            style: TextStyle(color: Colors.white),
+                            user[0].toUpperCase(),
+                            style: TextStyle(color: Colors.black),
                           ),
                         ),
-
                         SizedBox(height: 4),
                         Text(user, style: TextStyle(fontSize: 12)),
                       ],
