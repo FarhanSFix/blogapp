@@ -21,6 +21,9 @@ class _RegisterState extends State<Register> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController passwordConfirmController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   void _registerUser() async {
     ApiResponse response = await register(
       nameController.text,
@@ -50,13 +53,12 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Buang backgroundColor dari scaffold, ganti dengan Container di body
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.blueAccent,  // warna biru font "Reg"
-              Colors.green,       // warna hijau font "ister"
+              Colors.blueAccent,
+              Colors.green,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -116,15 +118,21 @@ class _RegisterState extends State<Register> {
                       _buildInputField(
                         passwordController,
                         'Password',
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         validator: (val) => val!.length < 6 ? 'Minimum 6 characters' : null,
+                        toggleVisibility: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
                       ),
                       _buildLabel('Confirm Password'),
                       _buildInputField(
                         passwordConfirmController,
                         'Confirm Password',
-                        obscureText: true,
+                        obscureText: _obscureConfirmPassword,
                         validator: (val) => val != passwordController.text ? 'Passwords do not match' : null,
+                        toggleVisibility: () {
+                          setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                        },
                       ),
                       const SizedBox(height: 25),
                       loading
@@ -183,6 +191,7 @@ class _RegisterState extends State<Register> {
     TextInputType inputType = TextInputType.text,
     bool obscureText = false,
     String? Function(String?)? validator,
+    VoidCallback? toggleVisibility,
   }) {
     return TextFormField(
       controller: controller,
@@ -195,6 +204,12 @@ class _RegisterState extends State<Register> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
         fillColor: Colors.grey[100],
+        suffixIcon: toggleVisibility != null
+            ? IconButton(
+                icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility),
+                onPressed: toggleVisibility,
+              )
+            : null,
       ),
     );
   }

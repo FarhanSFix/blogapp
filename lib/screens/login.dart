@@ -19,6 +19,7 @@ class _LoginState extends State<Login> {
   final TextEditingController txtEmail = TextEditingController();
   final TextEditingController txtPassword = TextEditingController();
   bool loading = false;
+  bool _obscurePassword = true;
 
   void _loginUser() async {
     ApiResponse response = await login(txtEmail.text, txtPassword.text);
@@ -26,9 +27,9 @@ class _LoginState extends State<Login> {
       _saveAndRedirectToHome(response.data as User);
     } else {
       setState(() => loading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${response.error}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${response.error}')),
+      );
     }
   }
 
@@ -36,9 +37,7 @@ class _LoginState extends State<Login> {
     SharedPreferences pref = await SharedPreferences.getInstance();
     await pref.setString('token', user.token ?? '');
     await pref.setInt('userId', user.id ?? 0);
-
     FocusManager.instance.primaryFocus?.unfocus();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => Home()),
@@ -50,13 +49,12 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Background gradient container
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.blueAccent, // sama warna font 'Log'
-              Colors.green, // sama warna font 'In'
+              Colors.blueAccent,
+              Colors.green,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -72,10 +70,7 @@ class _LoginState extends State<Login> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Form(
                   key: formKey,
                   child: Column(
@@ -116,10 +111,15 @@ class _LoginState extends State<Login> {
                       _buildInputField(
                         txtPassword,
                         'Password',
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         validator: (val) => val!.length < 6
                             ? 'Required at least 6 chars'
                             : null,
+                        toggleVisibility: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -142,9 +142,7 @@ class _LoginState extends State<Login> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -152,9 +150,7 @@ class _LoginState extends State<Login> {
                                 ),
                                 onPressed: () {
                                   if (formKey.currentState!.validate()) {
-                                    setState(() {
-                                      loading = true;
-                                    });
+                                    setState(() => loading = true);
                                     _loginUser();
                                   }
                                 },
@@ -208,6 +204,7 @@ class _LoginState extends State<Login> {
     TextInputType inputType = TextInputType.text,
     bool obscureText = false,
     String? Function(String?)? validator,
+    VoidCallback? toggleVisibility,
   }) {
     return TextFormField(
       controller: controller,
@@ -223,6 +220,13 @@ class _LoginState extends State<Login> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
         fillColor: Colors.grey[100],
+        suffixIcon: toggleVisibility != null
+            ? IconButton(
+                icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility),
+                onPressed: toggleVisibility,
+              )
+            : null,
       ),
     );
   }
