@@ -3,6 +3,7 @@ import 'package:blogapp/models/api_response.dart';
 import 'package:blogapp/models/post.dart';
 import 'package:blogapp/models/user.dart';
 import 'package:blogapp/screens/comment_screen.dart';
+import 'package:blogapp/screens/dm_screen.dart';
 import 'package:blogapp/services/post_service.dart';
 import 'package:blogapp/services/user_service.dart';
 import 'package:flutter/material.dart';
@@ -147,11 +148,15 @@ class _PostScreenState extends State<PostScreen> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () {},
-                              icon: Icon(
-                                Icons.chat_bubble_rounded,
-                                color: Colors.blue,
-                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DmScreen(),
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.chat, color: Colors.blue),
                             ),
                           ],
                         ),

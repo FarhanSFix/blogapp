@@ -217,7 +217,7 @@ class _ProfileState extends State<Profile> {
                     children: [Icon(Icons.logout), Text("Logout")],
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.45),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.40),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: GestureDetector(

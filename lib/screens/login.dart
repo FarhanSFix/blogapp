@@ -26,9 +26,9 @@ class _LoginState extends State<Login> {
       _saveAndRedirectToHome(response.data as User);
     } else {
       setState(() => loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${response.error}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${response.error}')));
     }
   }
 
@@ -56,7 +56,7 @@ class _LoginState extends State<Login> {
           gradient: LinearGradient(
             colors: [
               Colors.blueAccent, // sama warna font 'Log'
-              Colors.green,      // sama warna font 'In'
+              Colors.green, // sama warna font 'In'
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -68,9 +68,14 @@ class _LoginState extends State<Login> {
             child: Card(
               color: Colors.white,
               elevation: 10,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
                 child: Form(
                   key: formKey,
                   child: Column(
@@ -104,15 +109,17 @@ class _LoginState extends State<Login> {
                         txtEmail,
                         'Email',
                         inputType: TextInputType.emailAddress,
-                        validator: (val) => val!.isEmpty ? 'Invalid email address' : null,
+                        validator: (val) =>
+                            val!.isEmpty ? 'Invalid email address' : null,
                       ),
                       _buildLabel('Password'),
                       _buildInputField(
                         txtPassword,
                         'Password',
                         obscureText: true,
-                        validator: (val) =>
-                            val!.length < 6 ? 'Required at least 6 chars' : null,
+                        validator: (val) => val!.length < 6
+                            ? 'Required at least 6 chars'
+                            : null,
                       ),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -120,7 +127,9 @@ class _LoginState extends State<Login> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => ResetPassword()),
+                              MaterialPageRoute(
+                                builder: (_) => ResetPassword(),
+                              ),
                             );
                           },
                           child: const Text("Forgot Password?"),
@@ -133,9 +142,12 @@ class _LoginState extends State<Login> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                   backgroundColor: Colors.blue[800],
                                 ),
                                 onPressed: () {
@@ -148,17 +160,24 @@ class _LoginState extends State<Login> {
                                 },
                                 child: const Text(
                                   'Login',
-                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
                       const SizedBox(height: 20),
-                      kLoginRegisterHint('Don\'t have an account? ', 'Register', () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => Register()),
-                          (route) => false,
-                        );
-                      }),
+                      kLoginRegisterHint(
+                        'Don\'t have an account? ',
+                        'Register',
+                        () {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => Register()),
+                            (route) => false,
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -197,7 +216,10 @@ class _LoginState extends State<Login> {
       validator: validator,
       decoration: InputDecoration(
         hintText: hintText,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 16,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
         fillColor: Colors.grey[100],

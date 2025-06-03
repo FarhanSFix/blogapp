@@ -80,17 +80,19 @@ class _ResetPasswordState extends State<ResetPassword> {
           ),
           TextButton(
             onPressed: () async {
-              if (newPasswordController.text != confirmPasswordController.text) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Password tidak cocok')),
-                );
+              if (newPasswordController.text !=
+                  confirmPasswordController.text) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Password tidak cocok')));
                 return;
               }
 
-              if (newPasswordController.text.isEmpty || confirmPasswordController.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Kolom Harus diisi')),
-                );
+              if (newPasswordController.text.isEmpty ||
+                  confirmPasswordController.text.isEmpty) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Kolom Harus diisi')));
                 return;
               }
 
@@ -108,16 +110,18 @@ class _ResetPasswordState extends State<ResetPassword> {
               Navigator.of(context).pop();
 
               if (res.statusCode == 200) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(data['message'])),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(data['message'])));
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => Login()),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(data['message'] ?? somethingWentWrong)),
+                  SnackBar(
+                    content: Text(data['message'] ?? somethingWentWrong),
+                  ),
                 );
               }
             },
@@ -149,10 +153,7 @@ class _ResetPasswordState extends State<ResetPassword> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF4A90E2), // biru
-              Color(0xFF50C878), // hijau
-            ],
+            colors: [Color(0xFF4A90E2), Color(0xFF50C878)],
           ),
         ),
         child: Center(
@@ -165,7 +166,10 @@ class _ResetPasswordState extends State<ResetPassword> {
               ),
               elevation: 10,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -194,7 +198,10 @@ class _ResetPasswordState extends State<ResetPassword> {
                     const SizedBox(height: 30),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        "Email",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -203,7 +210,32 @@ class _ResetPasswordState extends State<ResetPassword> {
                       decoration: kInputDecoration('Email'),
                     ),
                     const SizedBox(height: 30),
-                    kTextButton('Reset', verifyEmail),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.blue[800],
+                        ),
+                        onPressed: () {
+                          if (txtEmail.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Kolom Email Wajib diisi"),
+                              ),
+                            );
+                          }
+                          verifyEmail();
+                        },
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
