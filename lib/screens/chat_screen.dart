@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ChatScreen extends StatefulWidget {
+  final String lastMsg;
   final String username;
-  const ChatScreen({required this.username});
+  const ChatScreen({required this.username, required this.lastMsg});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -10,15 +11,32 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _chatMessages = [];
+  final List<Map<String, dynamic>> _chatMessages = [];
+
+  @override
+  void initState() {
+    if (widget.lastMsg.isNotEmpty) {
+      Future.delayed(Duration(milliseconds: 500), () {
+        setState(() {
+          _chatMessages.add({
+            'sender': widget.username,
+            'message': widget.lastMsg,
+          });
+        });
+      });
+    }
+
+    super.initState();
+  }
 
   void _sendMessage() {
     if (_controller.text.trim().isNotEmpty) {
       setState(() {
-        _chatMessages.add(_controller.text.trim());
+        _chatMessages.add({'sender': 'me', 'message': _controller.text.trim()});
         _controller.clear();
       });
     }
+    print(_chatMessages);
   }
 
   @override
@@ -34,25 +52,17 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: ListView.builder(
                 itemCount: _chatMessages.length,
-                itemBuilder: (context, index) => ListTile(
-                  title: Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      padding: EdgeInsets.all(10),
-                      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlueAccent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(_chatMessages[index]),
-                    ),
-                  ),
-                ),
+                itemBuilder: (context, index) {
+                  final msg = _chatMessages[index];
+                  final isMe = msg['sender'] == 'me';
+                  return _buildMessageBubble(msg['message'], isMe);
+                },
               ),
             ),
             Divider(height: 1),
-            Padding(
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              color: Colors.grey.shade100,
               child: Row(
                 children: [
                   Expanded(
@@ -72,6 +82,42 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(String message, bool isMe) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blueAccent : Colors.grey.shade300,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+            bottomLeft: isMe ? Radius.circular(12) : Radius.circular(0),
+            bottomRight: isMe ? Radius.circular(0) : Radius.circular(12),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          message,
+          style: TextStyle(
+            color: isMe ? Colors.white : Colors.black87,
+            fontSize: 16,
+          ),
         ),
       ),
     );

@@ -129,8 +129,10 @@ class _DmScreenState extends State<DmScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              ChatScreen(username: msg['name']!),
+                          builder: (context) => ChatScreen(
+                            username: msg['name']!,
+                            lastMsg: msg['lastMessage']!,
+                          ),
                         ),
                       );
                     },
