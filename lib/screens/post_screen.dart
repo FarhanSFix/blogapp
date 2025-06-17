@@ -124,60 +124,79 @@ class _PostScreenState extends State<PostScreen> {
         : Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Scaffold(
+              backgroundColor: Colors.white,
               appBar: PreferredSize(
-                preferredSize: Size(double.infinity, 100),
-                child: Card(
-                  elevation: 3,
-                  child: Padding(
+                preferredSize: Size(double.infinity, 120),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(15),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.blueAccent, Colors.green],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 4,
+                      vertical: 10,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Welcome, $userName!!",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                    child: SafeArea(
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Welcome, $userName!!",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DmScreen(),
-                                  ),
-                                );
-                              },
-                              icon: Icon(Icons.chat, color: Colors.blue),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: _filterPosts,
-                            decoration: InputDecoration(
-                              prefixIcon: Icon(Icons.search),
-                              hintText: 'Search...',
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DmScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.chat, color: Colors.white),
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: _filterPosts,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                ),
+                                hintText: 'Search...',
+                                hintStyle: TextStyle(color: Colors.white70),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.2),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: BorderSide.none,
+                                ),
                               ),
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

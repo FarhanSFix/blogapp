@@ -20,6 +20,7 @@ class _DmScreenState extends State<DmScreen> {
   List<Map<String, dynamic>> _activeUsers = [];
   List<Map<String, dynamic>> _allUsers = [];
   int? _currentUserId;
+  bool _isLoading = true;
 
   Color getRandomColor() {
     final Random random = Random();
@@ -29,6 +30,21 @@ class _DmScreenState extends State<DmScreen> {
       random.nextInt(156) + 100,
       random.nextInt(156) + 100,
     );
+  }
+
+  String _formatDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return '';
+    final date = DateTime.tryParse(isoDate)?.toLocal();
+    if (date == null) return '';
+
+    final now = DateTime.now();
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
+      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    }
+
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year.toString()}';
   }
 
   Future<void> getUsers() async {
@@ -45,33 +61,45 @@ class _DmScreenState extends State<DmScreen> {
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
-
-      // Simpan semua user (untuk FAB)
       _allUsers = List<Map<String, dynamic>>.from(data);
+      _currentUserId = await getUserId();
 
       List<Map<String, dynamic>> usersWithLastMsg = [];
 
-      // Ambil ID pengguna saat ini agar tidak tampil di list
-      _currentUserId = await getUserId();
-
       for (var user in data) {
         if (user['id'] == null || user['id'] == _currentUserId) continue;
-        String lastMsg = await getLastMessage(user['id']);
+
+        final lastMsgData = await getLastMessage(user['id']);
+        final lastMsg = lastMsgData['message'];
+        final createdAt = lastMsgData['created_at'];
 
         if (lastMsg.isNotEmpty) {
           usersWithLastMsg.add({
             'id': user['id'],
             'name': user['name'],
             'lastMsg': lastMsg,
+            'created_at': createdAt,
           });
         }
       }
 
+      usersWithLastMsg.sort((a, b) {
+        final dateA =
+            DateTime.tryParse(a['created_at'] ?? '') ?? DateTime(2000);
+        final dateB =
+            DateTime.tryParse(b['created_at'] ?? '') ?? DateTime(2000);
+        return dateB.compareTo(dateA);
+      });
+
       setState(() {
         _activeUsers = usersWithLastMsg;
+        _isLoading = false;
       });
     } else {
       print('Gagal ambil user aktif: ${res.statusCode}');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -92,7 +120,7 @@ class _DmScreenState extends State<DmScreen> {
     }
   }
 
-  Future<String> getLastMessage(int userId) async {
+  Future<Map<String, dynamic>> getLastMessage(int userId) async {
     final token = await getToken();
     final res = await http.get(
       Uri.parse('$baseURL/messages/$userId'),
@@ -102,10 +130,14 @@ class _DmScreenState extends State<DmScreen> {
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
       if (data.isNotEmpty) {
-        return data.last['message'] ?? '';
+        final lastMsg = data.last;
+        return {
+          'message': lastMsg['message'] ?? '',
+          'created_at': lastMsg['created_at'] ?? '',
+        };
       }
     }
-    return '';
+    return {'message': '', 'created_at': ''};
   }
 
   @override
@@ -122,46 +154,56 @@ class _DmScreenState extends State<DmScreen> {
           title: Text('Direct Message'),
           backgroundColor: Colors.blueAccent,
         ),
-        body: ListView.builder(
-          itemCount: _activeUsers.length,
-          itemBuilder: (context, index) {
-            final user = _activeUsers[index];
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: getRandomColor(),
-                child: Text(user['name'][0].toUpperCase()),
-              ),
-              title: Text(user['name']),
-              subtitle: Text(
-                user['lastMsg'] ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey[600]),
+        body: _isLoading
+            ? Center(child: CircularProgressIndicator())
+            : _activeUsers.isEmpty
+            ? Center(child: Text('Tidak ada percakapan.'))
+            : RefreshIndicator(
+                onRefresh: getUsers,
+                child: ListView.builder(
+                  itemCount: _activeUsers.length,
+                  itemBuilder: (context, index) {
+                    final user = _activeUsers[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: getRandomColor(),
+                        child: Text(user['name'][0].toUpperCase()),
+                      ),
+                      title: Text(user['name']),
+                      subtitle: Text(
+                        user['lastMsg'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      trailing: Text(
+                        _formatDate(user['created_at']),
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              username: user['name'],
+                              lastMsg: '',
+                              receiverId: user['id'],
+                            ),
+                          ),
+                        );
+                      },
+                      onLongPress: () {
+                        _showDeleteDialog(context, user['id'], user['name']);
+                      },
+                    );
+                  },
+                ),
               ),
 
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      username: user['name'],
-                      lastMsg: '',
-                      receiverId: user['id'],
-                    ),
-                  ),
-                );
-              },
-              onLongPress: () {
-                _showDeleteDialog(context, user['id'], user['name']);
-              },
-            );
-          },
-        ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.blueAccent,
           child: Icon(Icons.message),
           onPressed: () {
-            // Aksi saat FAB ditekan, bisa nanti dibikin pilih user dari dialog atau ke halaman pilih user
             _showUserSelectionDialog(context);
           },
         ),
@@ -173,36 +215,54 @@ class _DmScreenState extends State<DmScreen> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext ctx) {
-        return ListView.builder(
-          itemCount: _allUsers.length,
-          itemBuilder: (context, index) {
-            final user = _allUsers[index];
-            if (user['id'] == _currentUserId)
-              return SizedBox(); // skip diri sendiri
-
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: getRandomColor(),
-                child: Text(user['name'][0].toUpperCase()),
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Pilih user untuk memulai chat',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
-              title: Text(user['name']),
-              onTap: () {
-                Navigator.pop(ctx); // tutup bottom sheet
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      username: user['name'],
-                      lastMsg: '',
-                      receiverId: user['id'],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+              Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _allUsers.length,
+                  itemBuilder: (context, index) {
+                    final user = _allUsers[index];
+                    if (user['id'] == _currentUserId)
+                      return SizedBox(); // skip diri sendiri
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: getRandomColor(),
+                        child: Text(user['name'][0].toUpperCase()),
+                      ),
+                      title: Text(user['name']),
+                      onTap: () {
+                        Navigator.pop(ctx); // tutup bottom sheet
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              username: user['name'],
+                              lastMsg: '',
+                              receiverId: user['id'],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
+      isScrollControlled: true,
     );
   }
 
@@ -220,10 +280,11 @@ class _DmScreenState extends State<DmScreen> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(ctx); // Tutup dialog
+                Navigator.pop(ctx);
                 try {
                   await deleteConversation(userId);
-                  // Refresh list
+                  setState(() => _isLoading = true);
+
                   getUsers();
                   ScaffoldMessenger.of(
                     context,

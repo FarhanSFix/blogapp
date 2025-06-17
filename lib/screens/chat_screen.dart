@@ -34,6 +34,23 @@ class _ChatScreenState extends State<ChatScreen> {
     return Color.fromARGB(255, r, g, b);
   }
 
+  String _formatDateHeader(String isoDate) {
+    final date = DateTime.tryParse(isoDate)?.toLocal();
+    if (date == null) return '';
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final msgDate = DateTime(date.year, date.month, date.day);
+
+    if (msgDate == today) {
+      return 'Hari Ini';
+    } else if (msgDate == today.subtract(Duration(days: 1))) {
+      return 'Kemarin';
+    } else {
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    }
+  }
+
   String _formatTime(String isoTime) {
     final dateTime = DateTime.tryParse(isoTime)?.toLocal();
     if (dateTime == null) return '';
@@ -126,9 +143,14 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() async {
     if (_controller.text.trim().isNotEmpty) {
       final msg = _controller.text.trim();
+      final now = DateTime.now().toIso8601String(); // waktu lokal saat ini
 
       setState(() {
-        _chatMessages.add({'sender': myId, 'message': msg});
+        _chatMessages.add({
+          'sender': myId,
+          'message': msg,
+          'created_at': now, // tambahkan ini untuk menghindari null
+        });
         _controller.clear();
       });
 
@@ -173,50 +195,101 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
 
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: _chatMessages.length,
-                itemBuilder: (context, index) {
-                  final msg = _chatMessages[index];
-                  final isMe = msg['sender'] == myId;
-
-                  print(
-                    "DEBUG => sender: ${msg['sender']}, myId: $myId, isMe: $isMe",
-                  );
-
-                  return _buildMessageBubble(
-                    msg['message'],
-                    isMe,
-                    msg['created_at'] ?? '',
-                  );
-                },
-              ),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green, Colors.blue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            Divider(height: 1),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              color: Colors.grey.shade100,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Ketik pesan...',
-                        border: InputBorder.none,
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final msg = _chatMessages[index];
+                    final isMe = msg['sender'] == myId;
+                    final currentDate = msg['created_at'];
+                    final currentDateOnly = currentDate?.substring(0, 10);
+
+                    String? previousDate;
+                    if (index > 0) {
+                      previousDate = _chatMessages[index - 1]['created_at']
+                          ?.substring(0, 10);
+                    }
+
+                    List<Widget> messageWidgets = [];
+
+                    if (index == 0 || previousDate != currentDateOnly) {
+                      messageWidgets.add(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Center(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                _formatDateHeader(currentDate),
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    messageWidgets.add(
+                      _buildMessageBubble(
+                        msg['message'],
+                        isMe,
+                        msg['created_at'] ?? '',
+                      ),
+                    );
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: messageWidgets,
+                    );
+                  },
+                ),
+              ),
+
+              Divider(height: 1),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                color: Colors.grey.shade100,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText: 'Ketik pesan...',
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: _sendMessage,
-                    icon: Icon(Icons.send, color: Colors.blueAccent),
-                  ),
-                ],
+                    IconButton(
+                      onPressed: _sendMessage,
+                      icon: Icon(Icons.send, color: Colors.blueAccent),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

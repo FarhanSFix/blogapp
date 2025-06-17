@@ -15,6 +15,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: currentIndex == 0 ? PostScreen() : Profile(),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.blue,
