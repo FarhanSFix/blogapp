@@ -17,12 +17,9 @@ class DmScreen extends StatefulWidget {
 }
 
 class _DmScreenState extends State<DmScreen> {
-  final List<Map<String, String>> _messages = [
-    {'name': 'Rian', 'lastMessage': 'otw banh!!', 'time': '12:00'},
-    {'name': 'Nina', 'lastMessage': 'Lagi apa?', 'time': '11:30'},
-    {'name': 'Dika', 'lastMessage': 'Thanks ya!', 'time': '10:45'},
-  ];
-  List<String> _activeUsers = [];
+  List<Map<String, dynamic>> _activeUsers = [];
+  List<Map<String, dynamic>> _allUsers = [];
+  int? _currentUserId;
 
   Color getRandomColor() {
     final Random random = Random();
@@ -48,14 +45,67 @@ class _DmScreenState extends State<DmScreen> {
 
     if (res.statusCode == 200) {
       final List data = jsonDecode(res.body);
+
+      // Simpan semua user (untuk FAB)
+      _allUsers = List<Map<String, dynamic>>.from(data);
+
+      List<Map<String, dynamic>> usersWithLastMsg = [];
+
+      // Ambil ID pengguna saat ini agar tidak tampil di list
+      _currentUserId = await getUserId();
+
+      for (var user in data) {
+        if (user['id'] == null || user['id'] == _currentUserId) continue;
+        String lastMsg = await getLastMessage(user['id']);
+
+        if (lastMsg.isNotEmpty) {
+          usersWithLastMsg.add({
+            'id': user['id'],
+            'name': user['name'],
+            'lastMsg': lastMsg,
+          });
+        }
+      }
+
       setState(() {
-        _activeUsers = data
-            .map<String>((user) => user['name'] as String)
-            .toList();
+        _activeUsers = usersWithLastMsg;
       });
     } else {
       print('Gagal ambil user aktif: ${res.statusCode}');
     }
+  }
+
+  Future<void> deleteConversation(int userId) async {
+    final token = await getToken();
+    final res = await http.delete(
+      Uri.parse('$baseURL/messages/$userId'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (res.statusCode == 200) {
+      print('Percakapan berhasil dihapus');
+      setState(() {
+        _activeUsers.removeWhere((user) => user['id'] == userId);
+      });
+    } else {
+      throw Exception('Gagal menghapus percakapan');
+    }
+  }
+
+  Future<String> getLastMessage(int userId) async {
+    final token = await getToken();
+    final res = await http.get(
+      Uri.parse('$baseURL/messages/$userId'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
+      if (data.isNotEmpty) {
+        return data.last['message'] ?? '';
+      }
+    }
+    return '';
   }
 
   @override
@@ -72,77 +122,123 @@ class _DmScreenState extends State<DmScreen> {
           title: Text('Direct Message'),
           backgroundColor: Colors.blueAccent,
         ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 20),
-              child: Text(
-                "Active Now",
-                style: TextStyle(fontWeight: FontWeight.bold),
+        body: ListView.builder(
+          itemCount: _activeUsers.length,
+          itemBuilder: (context, index) {
+            final user = _activeUsers[index];
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: getRandomColor(),
+                child: Text(user['name'][0].toUpperCase()),
               ),
-            ),
-            Container(
-              height: 90,
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _activeUsers.length,
-                itemBuilder: (context, index) {
-                  String user = _activeUsers[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 25,
-                          backgroundColor: getRandomColor(),
-                          child: Text(
-                            user[0].toUpperCase(),
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(user, style: TextStyle(fontSize: 12)),
-                      ],
+              title: Text(user['name']),
+              subtitle: Text(
+                user['lastMsg'] ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      username: user['name'],
+                      lastMsg: '',
+                      receiverId: user['id'],
                     ),
-                  );
-                },
-              ),
-            ),
-            Divider(height: 1),
-            // Daftar chat
-            Expanded(
-              child: ListView.builder(
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: getRandomColor(),
-                      child: Text(msg['name']![0]),
-                    ),
-                    title: Text(msg['name']!),
-                    subtitle: Text(msg['lastMessage']!),
-                    trailing: Text(msg['time']!),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            username: msg['name']!,
-                            lastMsg: msg['lastMessage']!,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                );
+              },
+              onLongPress: () {
+                _showDeleteDialog(context, user['id'], user['name']);
+              },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.blueAccent,
+          child: Icon(Icons.message),
+          onPressed: () {
+            // Aksi saat FAB ditekan, bisa nanti dibikin pilih user dari dialog atau ke halaman pilih user
+            _showUserSelectionDialog(context);
+          },
         ),
       ),
+    );
+  }
+
+  void _showUserSelectionDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext ctx) {
+        return ListView.builder(
+          itemCount: _allUsers.length,
+          itemBuilder: (context, index) {
+            final user = _allUsers[index];
+            if (user['id'] == _currentUserId)
+              return SizedBox(); // skip diri sendiri
+
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: getRandomColor(),
+                child: Text(user['name'][0].toUpperCase()),
+              ),
+              title: Text(user['name']),
+              onTap: () {
+                Navigator.pop(ctx); // tutup bottom sheet
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      username: user['name'],
+                      lastMsg: '',
+                      receiverId: user['id'],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, int userId, String username) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Hapus Percakapan'),
+          content: Text('Yakin ingin menghapus percakapan dengan $username?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx); // Tutup dialog
+                try {
+                  await deleteConversation(userId);
+                  // Refresh list
+                  getUsers();
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Percakapan dihapus')));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gagal menghapus: $e')),
+                  );
+                }
+              },
+              child: Text('Hapus', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

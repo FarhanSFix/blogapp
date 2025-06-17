@@ -1,42 +1,143 @@
+import 'dart:convert';
+
+import 'package:blogapp/constant.dart';
+import 'package:blogapp/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
-  final String lastMsg;
   final String username;
-  const ChatScreen({required this.username, required this.lastMsg});
+  final String lastMsg;
+  final int receiverId;
+
+  const ChatScreen({
+    required this.username,
+    required this.lastMsg,
+    required this.receiverId,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  int? myId;
+
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _chatMessages = [];
 
-  @override
-  void initState() {
-    if (widget.lastMsg.isNotEmpty) {
-      Future.delayed(Duration(milliseconds: 500), () {
-        setState(() {
-          _chatMessages.add({
-            'sender': widget.username,
-            'message': widget.lastMsg,
-          });
-        });
-      });
-    }
-
-    super.initState();
+  Color getRandomColor(String text) {
+    final hash = text.codeUnits.fold(0, (a, b) => a + b);
+    final r = (hash * 123) % 255;
+    final g = (hash * 321) % 255;
+    final b = (hash * 213) % 255;
+    return Color.fromARGB(255, r, g, b);
   }
 
-  void _sendMessage() {
-    if (_controller.text.trim().isNotEmpty) {
+  String _formatTime(String isoTime) {
+    final dateTime = DateTime.tryParse(isoTime)?.toLocal();
+    if (dateTime == null) return '';
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> getMyId() async {
+    final token = await getToken();
+    final res = await http.get(
+      Uri.parse('$baseURL/user'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    print('GET /user status: ${res.statusCode}');
+    print('RESPONSE: ${res.body}');
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body); // ambil response body
+      final user = data['user']; // ambil isi key "user"
       setState(() {
-        _chatMessages.add({'sender': 'me', 'message': _controller.text.trim()});
+        myId = user['id']; // ambil id dari dalam user
+      });
+      print("My ID set to: $myId");
+    } else {
+      throw Exception('Gagal mengambil user info');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMessages(int receiverId) async {
+    final token = await getToken();
+
+    final res = await http.get(
+      Uri.parse('$baseURL/messages/$receiverId'),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+
+    if (res.statusCode == 200) {
+      final List data = jsonDecode(res.body);
+      return data
+          .map<Map<String, dynamic>>(
+            (m) => {
+              'sender': m['sender_id'],
+              'message': m['message'],
+              'created_at': m['created_at'],
+            },
+          )
+          .toList();
+    } else {
+      throw Exception('Gagal memuat pesan');
+    }
+  }
+
+  Future<void> sendMessageToServer(String message, int receiverId) async {
+    String token = await getToken();
+    final response = await http.post(
+      Uri.parse('$baseURL/messages'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'receiver_id': receiverId, 'message': message}),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Gagal mengirim pesan');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initChat(); // eksekusi fungsi saat screen dimulai
+  }
+
+  Future<void> initChat() async {
+    await getMyId(); // Tunggu sampai myId berhasil diambil
+
+    // Pastikan myId sudah bukan null
+    if (myId != null) {
+      final messages = await getMessages(widget.receiverId);
+
+      setState(() {
+        _chatMessages.addAll(messages);
+      });
+    } else {
+      print("Gagal mendapatkan myId");
+    }
+  }
+
+  void _sendMessage() async {
+    if (_controller.text.trim().isNotEmpty) {
+      final msg = _controller.text.trim();
+
+      setState(() {
+        _chatMessages.add({'sender': myId, 'message': msg});
         _controller.clear();
       });
+
+      try {
+        await sendMessageToServer(msg, widget.receiverId);
+      } catch (e) {
+        print("Error kirim pesan: $e");
+      }
     }
-    print(_chatMessages);
   }
 
   @override
@@ -44,9 +145,34 @@ class _ChatScreenState extends State<ChatScreen> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.username),
           backgroundColor: Colors.blueAccent,
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: getRandomColor(widget.username),
+                child: Text(
+                  widget.username.isNotEmpty
+                      ? widget.username[0].toUpperCase()
+                      : '?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.username,
+                  style: TextStyle(fontSize: 18),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
+
         body: Column(
           children: [
             Expanded(
@@ -54,8 +180,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemCount: _chatMessages.length,
                 itemBuilder: (context, index) {
                   final msg = _chatMessages[index];
-                  final isMe = msg['sender'] == 'me';
-                  return _buildMessageBubble(msg['message'], isMe);
+                  final isMe = msg['sender'] == myId;
+
+                  print(
+                    "DEBUG => sender: ${msg['sender']}, myId: $myId, isMe: $isMe",
+                  );
+
+                  return _buildMessageBubble(
+                    msg['message'],
+                    isMe,
+                    msg['created_at'] ?? '',
+                  );
                 },
               ),
             ),
@@ -87,7 +222,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(String message, bool isMe) {
+  Widget _buildMessageBubble(String message, bool isMe, String time) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -112,12 +247,27 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
-        child: Text(
-          message,
-          style: TextStyle(
-            color: isMe ? Colors.white : Colors.black87,
-            fontSize: 16,
-          ),
+        child: Column(
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: TextStyle(
+                color: isMe ? Colors.white : Colors.black87,
+                fontSize: 16,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              _formatTime(time),
+              style: TextStyle(
+                color: isMe ? Colors.white70 : Colors.black54,
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
       ),
     );
