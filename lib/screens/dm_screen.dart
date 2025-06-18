@@ -91,12 +91,14 @@ class _DmScreenState extends State<DmScreen> {
         return dateB.compareTo(dateA);
       });
 
+      if (!mounted) return;
       setState(() {
         _activeUsers = usersWithLastMsg;
         _isLoading = false;
       });
     } else {
       print('Gagal ambil user aktif: ${res.statusCode}');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -283,9 +285,11 @@ class _DmScreenState extends State<DmScreen> {
                 Navigator.pop(ctx);
                 try {
                   await deleteConversation(userId);
+                  if (!mounted) return;
                   setState(() => _isLoading = true);
 
-                  getUsers();
+                  await getUsers();
+                  if (!mounted) return;
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(SnackBar(content: Text('Percakapan dihapus')));
